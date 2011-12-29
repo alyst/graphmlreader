@@ -26,6 +26,7 @@ import cytoscape.Cytoscape;
 import cytoscape.data.CyAttributes;
 import cytoscape.data.CyAttributesUtils;
 import cytoscape.task.TaskMonitor;
+import cytoscape.view.CyNetworkView;
 
 public class GraphMLWriter {
 	
@@ -46,6 +47,7 @@ public class GraphMLWriter {
 	
 
 	private final CyNetwork network;
+	private final CyNetworkView networkView;
 	private final Writer writer;
 	private final TaskMonitor monitor;
 
@@ -58,9 +60,10 @@ public class GraphMLWriter {
 		return objectType + ':' + name;
 	}
 
-	public GraphMLWriter(final CyNetwork network, final Writer writer,
+	public GraphMLWriter(final CyNetwork network, final CyNetworkView networkView, final Writer writer,
 			final TaskMonitor taskMonitor) {
 		this.network = network;
+		this.networkView = networkView;
 		this.writer = writer;
 		this.monitor = taskMonitor;
 		factory = null;

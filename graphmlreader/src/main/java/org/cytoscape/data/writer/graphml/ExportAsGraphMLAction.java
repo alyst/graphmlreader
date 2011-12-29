@@ -16,6 +16,7 @@ import cytoscape.task.util.TaskManager;
 import cytoscape.util.CyFileFilter;
 import cytoscape.util.CytoscapeAction;
 import cytoscape.util.FileUtil;
+import cytoscape.view.CyNetworkView;
 
 public class ExportAsGraphMLAction extends CytoscapeAction {
 
@@ -34,12 +35,15 @@ public class ExportAsGraphMLAction extends CytoscapeAction {
 	public void actionPerformed(ActionEvent e) {
 		String name;
 
+		// Get Current Network and View
+		final CyNetworkView networkView = Cytoscape.getCurrentNetworkView();
+		final CyNetwork network = networkView != null ? networkView.getNetwork() : Cytoscape.getCurrentNetwork();
+
 		try {
 
 			CyFileFilter cyFileFilter = new CyFileFilter(GRAPHML_EXT);
 
-			String suggestedFileName = Cytoscape.getCurrentNetwork()
-					.getIdentifier();
+			String suggestedFileName = network.getIdentifier();
 			if (!suggestedFileName.endsWith("." + GRAPHML_EXT)) {
 				suggestedFileName = suggestedFileName + "." + GRAPHML_EXT;
 			}
@@ -56,11 +60,8 @@ public class ExportAsGraphMLAction extends CytoscapeAction {
 		if (!name.endsWith("." + GRAPHML_EXT))
 			name = name + "." + GRAPHML_EXT;
 
-		// Get Current Network and View
-		CyNetwork network = Cytoscape.getCurrentNetwork();
-
 		// Create Task
-		ExportAsGraphMLTask task = new ExportAsGraphMLTask(name, network);
+		ExportAsGraphMLTask task = new ExportAsGraphMLTask(name, network, networkView);
 
 		// Configure JTask Dialog Pop-Up Box
 		JTaskConfig jTaskConfig = new JTaskConfig();
@@ -85,6 +86,7 @@ public class ExportAsGraphMLAction extends CytoscapeAction {
 class ExportAsGraphMLTask implements Task {
 	private String fileName;
 	private CyNetwork network;
+	private CyNetworkView networkView;
 
 	private TaskMonitor taskMonitor;
 
@@ -96,9 +98,10 @@ class ExportAsGraphMLTask implements Task {
 	 * @param view
 	 *            Network View Object.
 	 */
-	ExportAsGraphMLTask(String fileName, CyNetwork network) {
+	ExportAsGraphMLTask(String fileName, CyNetwork network, CyNetworkView networkView) {
 		this.fileName = fileName;
 		this.network = network;
+		this.networkView = networkView;
 	}
 
 	/**
@@ -167,7 +170,7 @@ class ExportAsGraphMLTask implements Task {
 
 		try {
 			fileWriter = new FileWriter(fileName);
-			final GraphMLWriter writer = new GraphMLWriter(network, fileWriter, taskMonitor);
+			final GraphMLWriter writer = new GraphMLWriter(network, networkView, fileWriter, taskMonitor);
 			writer.write();
 		} finally {
 			if (fileWriter != null) {
