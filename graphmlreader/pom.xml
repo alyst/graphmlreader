@@ -5,7 +5,7 @@
 	<groupId>org.cytoscape</groupId>
 	<artifactId>graphmlreader</artifactId>
 	<packaging>jar</packaging>
-	<version>0.11</version>
+	<version>0.12-SNAPSHOT</version>
 	<name>GraphML Reader</name>
 	<url>http://maven.apache.org</url>
 
