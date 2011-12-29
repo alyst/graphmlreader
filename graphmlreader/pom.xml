@@ -48,7 +48,9 @@
 					<artifactId>maven-jar-plugin</artifactId>
 					<configuration>
 						<archive>
-							<manifestFile>${basedir}/src/main/resources/META-INF/MANIFEST.MF</manifestFile>
+                            <manifestEntries>
+                                <Cytoscape-plugin>org.cytoscape.data.reader.graphml.GraphMLReaderPlugin</Cytoscape-plugin>
+                            </manifestEntries>
 						</archive>
 					</configuration>
 				</plugin>
