@@ -118,6 +118,18 @@ public class GraphMLWriter {
 		writeEdges(graphElm);
 	}
 
+	private Element attributeDefinitionNode( String objectType, String name, String type )
+	{
+		Element keyElm = doc.createElement("key");
+		keyElm.setAttribute("for", objectType );
+		keyElm.setAttribute("attr.name", name );
+		keyElm.setAttribute("attr.type", type );
+		String graphmlId = objectType.substring(0, 1) + ( attrIdMap.size() + 1 );
+		keyElm.setAttribute(ID, graphmlId );
+		attrIdMap.put( EncodeCytoscapeAttr(objectType, name), graphmlId );
+		return keyElm;
+	}
+
 	private void writeAttributes(CyAttributes attrs, String objectType, Element parent) {
 		final String[] nodeAttrNames = attrs.getAttributeNames();
 		for(String attrName : nodeAttrNames) {
@@ -125,15 +137,7 @@ public class GraphMLWriter {
 			String tag = GraphMLAttributeDataTypes.getTag(type);
 			if(tag == null)
 				tag = GraphMLAttributeDataTypes.STRING.getTypeTag();
-
-			Element keyElm = doc.createElement("key");
-			keyElm.setAttribute("for", objectType);
-			keyElm.setAttribute("attr.name", attrName);
-			keyElm.setAttribute("attr.type", tag);
-			String graphmlId = objectType.substring(0, 1) + ( attrIdMap.size() + 1 );
-			attrIdMap.put( EncodeCytoscapeAttr(objectType, attrName), graphmlId );
-			keyElm.setAttribute(ID, graphmlId);
-			parent.appendChild(keyElm);
+			parent.appendChild( attributeDefinitionNode( objectType, attrName, tag ) );
 		}
 	}
 	
@@ -160,18 +164,19 @@ public class GraphMLWriter {
 		}
 	}
 	
+	private void appendDataAttr( String objectType, Element parent, String attrName, Object val ) {
+		if (val != null) {
+			final Element dataElm = doc.createElement(DATA);
+			dataElm.setAttribute("key", attrIdMap.get( EncodeCytoscapeAttr( objectType, attrName ) ) );
+			dataElm.setTextContent(val.toString());
+			parent.appendChild( dataElm );
+		}
+	}
 	private void appendData(String objectType, CyAttributes attrs, Element parent, String id) {
 		final String[] attrNames = attrs.getAttributeNames();
 		
 		for(String name: attrNames) {
-			Object val = attrs.getAttribute(id, name);
-			if(val != null) {
-				Element dataElm = doc.createElement("data");
-				dataElm.setAttribute("key", attrIdMap.get( EncodeCytoscapeAttr(objectType, attrName) ) );
-				dataElm.setTextContent(val.toString());
-				parent.appendChild(dataElm);
-			}
-			
+			appendDataAttr(objectType, parent, name, attrs.getAttribute(id, name));
 		}
 	}
 
