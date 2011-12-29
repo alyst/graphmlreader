@@ -7,7 +7,7 @@
 	<packaging>jar</packaging>
 	<version>0.12-SNAPSHOT</version>
 	<name>GraphML Reader</name>
-	<url>http://maven.apache.org</url>
+	<url>http://code.google.com/p/graphmlreader</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
