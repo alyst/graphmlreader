@@ -168,7 +168,11 @@ public class GraphMLWriter {
 		if (val != null) {
 			final Element dataElm = doc.createElement(DATA);
 			dataElm.setAttribute("key", attrIdMap.get( EncodeCytoscapeAttr( objectType, attrName ) ) );
-			dataElm.setTextContent(val.toString());
+			if ( val instanceof Element ) {
+				dataElm.appendChild( (Element)val );
+			} else {
+				dataElm.setTextContent(val.toString());
+			}
 			parent.appendChild( dataElm );
 		}
 	}
