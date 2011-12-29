@@ -45,17 +45,23 @@ public class GraphMLWriter {
 	private final Writer writer;
 	private final TaskMonitor monitor;
 
+	private	DocumentBuilderFactory factory;
+	private	DocumentBuilder builder;
+	private Document doc;
+
 	public GraphMLWriter(final CyNetwork network, final Writer writer,
 			final TaskMonitor taskMonitor) {
 		this.network = network;
 		this.writer = writer;
 		this.monitor = taskMonitor;
+		factory = null;
+		builder = null;
+		doc = null;
 	}
 
 	public void write() throws IOException, ParserConfigurationException, TransformerException {
-		final Document graphMLDoc = createDocument();
+		initDocument();
 
-		
 		TransformerFactory transFactory = TransformerFactory.newInstance();
 		transFactory.setAttribute("indent-number", 4);
 		Transformer transformer = transFactory.newTransformer();
@@ -63,23 +69,24 @@ public class GraphMLWriter {
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 		transformer.setOutputProperty(OutputKeys.METHOD, "xml");
 		
-		DOMSource source = new DOMSource(graphMLDoc);
+		DOMSource source = new DOMSource(doc);
 		
 		StreamResult result = new StreamResult(writer); 
 		transformer.transform(source, result);
-		
+
+		doc = null;
 	}
 
-	private Document createDocument() throws ParserConfigurationException {
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder builder = factory.newDocumentBuilder();
+	private void initDocument() throws ParserConfigurationException {
+		if ( factory == null ) factory = DocumentBuilderFactory.newInstance();
+		if ( builder == null ) builder = factory.newDocumentBuilder();
+		if ( doc != null ) throw new RuntimeException( "document already initialized" );
+		doc = builder.newDocument();
 		
-		Document document = builder.newDocument();
+		Element root = doc.createElement(GRAPHML);
 		
-		Element root = document.createElement(GRAPHML);
-		
-		document.appendChild(root);
-		Element graphElm = document.createElement(GRAPH);
+		doc.appendChild(root);
+		Element graphElm = doc.createElement(GRAPH);
 		
 		// For now, everything is directed.
 		graphElm.setAttribute(directed, "directed");
@@ -87,26 +94,22 @@ public class GraphMLWriter {
 		
 		root.appendChild(graphElm);
 		
-		writeAttributes(Cytoscape.getNodeAttributes(), document, root);
-		writeAttributes(Cytoscape.getEdgeAttributes(), document, root);
-		writeAttributes(Cytoscape.getNetworkAttributes(), document, root);
+		writeAttributes(Cytoscape.getNodeAttributes(), root);
+		writeAttributes(Cytoscape.getEdgeAttributes(), root);
+		writeAttributes(Cytoscape.getNetworkAttributes(), root);
 		
-		writeNodes(document, graphElm);
-		writeEdges(document, graphElm);
-		
-		return document;
-		
+		writeNodes(graphElm);
+		writeEdges(graphElm);
 	}
-	
-	private void writeAttributes(CyAttributes attr, Document doc, Element parent) {
-		final String[] nodeAttrNames = attr.getAttributeNames();
+
+	private void writeAttributes(CyAttributes attrs, Element parent) {
+		final String[] nodeAttrNames = attrs.getAttributeNames();
 		for(String attrName : nodeAttrNames) {
-			final Class<?> type = CyAttributesUtils.getClass(attrName, attr);
+			final Class<?> type = CyAttributesUtils.getClass(attrName, attrs);
 			String tag = GraphMLAttributeDataTypes.getTag(type);
-			
 			if(tag == null)
 				tag = GraphMLAttributeDataTypes.STRING.getTypeTag();
-			
+
 			Element keyElm = doc.createElement("key");
 			keyElm.setAttribute("for", NODE);
 			keyElm.setAttribute("attr.name", attrName);
@@ -116,34 +119,34 @@ public class GraphMLWriter {
 		}
 	}
 	
-	private void writeNodes(Document doc, Element parent) {
+	private void writeNodes(Element parent) {
 		final List<CyNode> nodes = network.nodesList();
 		
 		for(final CyNode node: nodes) {
 			final Element nodeElm = doc.createElement(NODE);
 			nodeElm.setAttribute(ID, node.getIdentifier());
-			appendData(Cytoscape.getNodeAttributes(), doc, nodeElm, node.getIdentifier());
+			appendData(Cytoscape.getNodeAttributes(), nodeElm, node.getIdentifier());
 			parent.appendChild(nodeElm);
 		}
 	}
 	
-	private void writeEdges(Document doc, Element parent) {
+	private void writeEdges(Element parent) {
 		final List<CyEdge> edges = network.edgesList();
 		
 		for(final CyEdge edge: edges) {
 			final Element edgeElm = doc.createElement(EDGE);
 			edgeElm.setAttribute(SOURCE, edge.getSource().getIdentifier());
 			edgeElm.setAttribute(TARGET, edge.getTarget().getIdentifier());
-			appendData(Cytoscape.getEdgeAttributes(), doc, edgeElm, edge.getIdentifier());
+			appendData(Cytoscape.getEdgeAttributes(), edgeElm, edge.getIdentifier());
 			parent.appendChild(edgeElm);
 		}
 	}
 	
-	private void appendData(CyAttributes attr, Document doc, Element parent, String id) {
-		final String[] attrNames = attr.getAttributeNames();
+	private void appendData(CyAttributes attrs, Element parent, String id) {
+		final String[] attrNames = attrs.getAttributeNames();
 		
 		for(String name: attrNames) {
-			Object val = attr.getAttribute(id, name);
+			Object val = attrs.getAttribute(id, name);
 			if(val != null) {
 				Element dataElm = doc.createElement("data");
 				dataElm.setAttribute("key", name);
