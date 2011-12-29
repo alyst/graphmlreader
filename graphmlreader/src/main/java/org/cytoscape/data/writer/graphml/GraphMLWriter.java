@@ -2,7 +2,9 @@ package org.cytoscape.data.writer.graphml;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -50,6 +52,11 @@ public class GraphMLWriter {
 	private	DocumentBuilderFactory factory;
 	private	DocumentBuilder builder;
 	private Document doc;
+	private Map<String, String> attrIdMap;
+
+	private static String EncodeCytoscapeAttr( String objectType, String name ) {
+		return objectType + ':' + name;
+	}
 
 	public GraphMLWriter(final CyNetwork network, final Writer writer,
 			final TaskMonitor taskMonitor) {
@@ -59,6 +66,7 @@ public class GraphMLWriter {
 		factory = null;
 		builder = null;
 		doc = null;
+		attrIdMap = null;
 	}
 
 	public void write() throws IOException, ParserConfigurationException, TransformerException {
@@ -84,6 +92,7 @@ public class GraphMLWriter {
 		if ( builder == null ) builder = factory.newDocumentBuilder();
 		if ( doc != null ) throw new RuntimeException( "document already initialized" );
 		doc = builder.newDocument();
+		attrIdMap = new HashMap<String, String>();
 		
 		Element root = doc.createElementNS(GRAPHMLNS_URL, GRAPHML);
 		root.setAttribute( "xmlns", GRAPHMLNS_URL );
@@ -121,7 +130,9 @@ public class GraphMLWriter {
 			keyElm.setAttribute("for", objectType);
 			keyElm.setAttribute("attr.name", attrName);
 			keyElm.setAttribute("attr.type", tag);
-			keyElm.setAttribute(ID, attrName);
+			String graphmlId = objectType.substring(0, 1) + ( attrIdMap.size() + 1 );
+			attrIdMap.put( EncodeCytoscapeAttr(objectType, attrName), graphmlId );
+			keyElm.setAttribute(ID, graphmlId);
 			parent.appendChild(keyElm);
 		}
 	}
@@ -156,7 +167,7 @@ public class GraphMLWriter {
 			Object val = attrs.getAttribute(id, name);
 			if(val != null) {
 				Element dataElm = doc.createElement("data");
-				dataElm.setAttribute("key", name);
+				dataElm.setAttribute("key", attrIdMap.get( EncodeCytoscapeAttr(objectType, attrName) ) );
 				dataElm.setTextContent(val.toString());
 				parent.appendChild(dataElm);
 			}
