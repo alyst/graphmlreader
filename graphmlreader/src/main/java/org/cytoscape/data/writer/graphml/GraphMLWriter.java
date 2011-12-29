@@ -102,7 +102,7 @@ public class GraphMLWriter {
 		// For now, everything is directed.
 		graphElm.setAttribute(directed, "directed");
 		graphElm.setAttribute(ID, network.getTitle());
-		
+		appendData( GRAPH, Cytoscape.getNetworkAttributes(), graphElm, network.getIdentifier() );
 		root.appendChild(graphElm);
 		
 		writeNodes(graphElm);
