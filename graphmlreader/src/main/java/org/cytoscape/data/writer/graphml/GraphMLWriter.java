@@ -33,7 +33,8 @@ public class GraphMLWriter {
 	private static final String ID = "id";
 	private static final String NODE = "node";
 	private static final String EDGE = "edge";
-	
+	private static final String DATA = "data";
+
 	private static final String SOURCE = "source";
 	private static final String TARGET = "target";
 	
@@ -92,9 +93,9 @@ public class GraphMLWriter {
 		doc.appendChild(root);
 
 		// write cytoscape attributes
-		writeAttributes(Cytoscape.getNetworkAttributes(), root);
-		writeAttributes(Cytoscape.getNodeAttributes(), root);
-		writeAttributes(Cytoscape.getEdgeAttributes(), root);
+		writeAttributes(Cytoscape.getNetworkAttributes(), GRAPH, root);
+		writeAttributes(Cytoscape.getNodeAttributes(), NODE, root);
+		writeAttributes(Cytoscape.getEdgeAttributes(), EDGE, root);
 
 		// write the network
 		Element graphElm = doc.createElement(GRAPH);
@@ -108,7 +109,7 @@ public class GraphMLWriter {
 		writeEdges(graphElm);
 	}
 
-	private void writeAttributes(CyAttributes attrs, Element parent) {
+	private void writeAttributes(CyAttributes attrs, String objectType, Element parent) {
 		final String[] nodeAttrNames = attrs.getAttributeNames();
 		for(String attrName : nodeAttrNames) {
 			final Class<?> type = CyAttributesUtils.getClass(attrName, attrs);
@@ -117,7 +118,7 @@ public class GraphMLWriter {
 				tag = GraphMLAttributeDataTypes.STRING.getTypeTag();
 
 			Element keyElm = doc.createElement("key");
-			keyElm.setAttribute("for", NODE);
+			keyElm.setAttribute("for", objectType);
 			keyElm.setAttribute("attr.name", attrName);
 			keyElm.setAttribute("attr.type", tag);
 			keyElm.setAttribute(ID, attrName);
@@ -131,7 +132,7 @@ public class GraphMLWriter {
 		for(final CyNode node: nodes) {
 			final Element nodeElm = doc.createElement(NODE);
 			nodeElm.setAttribute(ID, node.getIdentifier());
-			appendData(Cytoscape.getNodeAttributes(), nodeElm, node.getIdentifier());
+			appendData(NODE, Cytoscape.getNodeAttributes(), nodeElm, node.getIdentifier());
 			parent.appendChild(nodeElm);
 		}
 	}
@@ -143,12 +144,12 @@ public class GraphMLWriter {
 			final Element edgeElm = doc.createElement(EDGE);
 			edgeElm.setAttribute(SOURCE, edge.getSource().getIdentifier());
 			edgeElm.setAttribute(TARGET, edge.getTarget().getIdentifier());
-			appendData(Cytoscape.getEdgeAttributes(), edgeElm, edge.getIdentifier());
+			appendData(EDGE, Cytoscape.getEdgeAttributes(), edgeElm, edge.getIdentifier());
 			parent.appendChild(edgeElm);
 		}
 	}
 	
-	private void appendData(CyAttributes attrs, Element parent, String id) {
+	private void appendData(String objectType, CyAttributes attrs, Element parent, String id) {
 		final String[] attrNames = attrs.getAttributeNames();
 		
 		for(String name: attrNames) {
