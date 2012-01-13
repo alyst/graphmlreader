@@ -1,5 +1,6 @@
 package org.cytoscape.data.writer.graphml;
 
+import giny.view.EdgeView;
 import giny.view.NodeView;
 
 import java.awt.Color;
@@ -63,6 +64,23 @@ public class GraphMLWriter {
 		shapeCodeMap.put( NodeView.ROUNDED_RECTANGLE, "roundrectangle" );
 		shapeCodeMap.put( NodeView.TRIANGLE, "triangle" );
 		shapeCodeMap.put( NodeView.VEE, "trapezoid2" );
+	}
+
+	private static final Map<Integer, String> arrowCodeMap;
+
+	static {
+		arrowCodeMap = new HashMap<Integer, String>();
+		arrowCodeMap.put( EdgeView.NO_END, "none" );
+		arrowCodeMap.put( EdgeView.BLACK_ARROW, "standard" );
+		arrowCodeMap.put( EdgeView.WHITE_ARROW, "white_delta" ); // @TODO: no exact match
+		arrowCodeMap.put( EdgeView.BLACK_DELTA, "delta" );
+		arrowCodeMap.put( EdgeView.WHITE_DELTA, "white_delta" );
+		arrowCodeMap.put( EdgeView.BLACK_DIAMOND, "diamond" );
+		arrowCodeMap.put( EdgeView.WHITE_DIAMOND, "white_diamond" );
+		arrowCodeMap.put( EdgeView.BLACK_CIRCLE, "circle" );
+		arrowCodeMap.put( EdgeView.WHITE_CIRCLE, "transparent_circle" );
+		arrowCodeMap.put( EdgeView.BLACK_T, "t_shape" );
+		arrowCodeMap.put( EdgeView.WHITE_T, "t_shape" ); // @TODO: no exact match
 	}
 
 	private final CyNetwork network;
@@ -154,6 +172,16 @@ public class GraphMLWriter {
 		}
 
 		writeAttributes(Cytoscape.getEdgeAttributes(), EDGE, root);
+		// YFiles edge graphics attributes
+		if ( networkView != null ) {
+			String graphmlId = EDGE.substring(0, 1) + ( attrIdMap.size() + 1 );
+			attrIdMap.put( EncodeCytoscapeAttr(EDGE, GRAPHICS_ATTRID), graphmlId );
+			Element keyElm = doc.createElement("key");
+			keyElm.setAttribute("for", EDGE );
+			keyElm.setAttribute(ID, graphmlId);
+			keyElm.setAttribute("yfiles.type", "edgegraphics");
+			root.appendChild( keyElm );
+		}
 
 		// write the network
 		Element graphElm = doc.createElement(GRAPH);
@@ -259,6 +287,33 @@ public class GraphMLWriter {
 			edgeElm.setAttribute(SOURCE, edge.getSource().getIdentifier());
 			edgeElm.setAttribute(TARGET, edge.getTarget().getIdentifier());
 			appendData(EDGE, Cytoscape.getEdgeAttributes(), edgeElm, edge.getIdentifier());
+			if ( networkView != null ) {
+				final EdgeView edgeView = networkView.getEdgeView(edge);
+				final Element curveNode = doc.createElement( edgeView.getLineType() == EdgeView.CURVED_LINES
+						                                     ? "y:SplineEdge" : "y:PolyLine" );
+
+				final Element path = doc.createElement("y:Path");
+				path.setAttribute("sx", "0.0" );
+				path.setAttribute("sy", "0.0" );
+				path.setAttribute("tx", "0.0" );
+				path.setAttribute("ty", "0.0" );
+				curveNode.appendChild( path );
+
+				final Element lineStyle = doc.createElement("y:LineStyle");
+				lineStyle.setAttribute("color", ColorHexString((Color)edgeView.getUnselectedPaint()) );
+				lineStyle.setAttribute("type", "line" ); // @TODO use getStroke()
+				lineStyle.setAttribute("width", String.valueOf( edgeView.getStrokeWidth() ) );
+				curveNode.appendChild( lineStyle );
+
+				final Element arrows = doc.createElement("y:Arrows");
+				arrows.setAttribute("source", arrowCodeMap.containsKey( edgeView.getSourceEdgeEnd() )
+						                      ? arrowCodeMap.get( edgeView.getSourceEdgeEnd()) : "none" );
+				arrows.setAttribute("target", arrowCodeMap.containsKey( edgeView.getTargetEdgeEnd() )
+						                      ? arrowCodeMap.get( edgeView.getSourceEdgeEnd()) : "none" );
+				curveNode.appendChild( arrows );
+
+				appendDataAttr(EDGE, edgeElm, GRAPHICS_ATTRID, curveNode);
+			}
 			parent.appendChild(edgeElm);
 		}
 	}
