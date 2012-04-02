@@ -2,8 +2,9 @@ package org.cytoscape.data.writer.graphml;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import javax.swing.event.MenuEvent;
 
@@ -166,16 +167,16 @@ class ExportAsGraphMLTask implements Task {
 	 *             Error Writing to File.
 	 */
 	private void saveGraph() throws Exception {
-		FileWriter fileWriter = null;
+		OutputStream outputStream = null;
 
 		try {
-			fileWriter = new FileWriter(fileName);
-			final GraphMLWriter writer = new GraphMLWriter(network, networkView, fileWriter, taskMonitor);
+			outputStream = new FileOutputStream( fileName, false );
+			final GraphMLWriter writer = new GraphMLWriter(network, networkView, outputStream, taskMonitor);
 			writer.write();
 		} finally {
-			if (fileWriter != null) {
-				fileWriter.close();
-				fileWriter = null;
+			if (outputStream != null) {
+				outputStream.close();
+				outputStream = null;
 			}
 		}
 

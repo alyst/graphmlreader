@@ -6,7 +6,7 @@ import giny.view.NodeView;
 import java.awt.Color;
 import java.awt.Paint;
 import java.io.IOException;
-import java.io.Writer;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +85,7 @@ public class GraphMLWriter {
 
 	private final CyNetwork network;
 	private final CyNetworkView networkView;
-	private final Writer writer;
+	private final OutputStream outputStream;
 	private final TaskMonitor monitor;
 
 	private	DocumentBuilderFactory factory;
@@ -111,11 +111,11 @@ public class GraphMLWriter {
 		       + Integer.toHexString(256 + c.getBlue()).substring(1));
 	}
 	
-	public GraphMLWriter(final CyNetwork network, final CyNetworkView networkView, final Writer writer,
+	public GraphMLWriter(final CyNetwork network, final CyNetworkView networkView, final OutputStream outputStream,
 			final TaskMonitor taskMonitor) {
 		this.network = network;
 		this.networkView = networkView;
-		this.writer = writer;
+		this.outputStream = outputStream;
 		this.monitor = taskMonitor;
 		factory = null;
 		builder = null;
@@ -130,12 +130,13 @@ public class GraphMLWriter {
 		transFactory.setAttribute("indent-number", 4);
 		Transformer transformer = transFactory.newTransformer();
 		
+		transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 		transformer.setOutputProperty(OutputKeys.METHOD, "xml");
 		
 		DOMSource source = new DOMSource(doc);
 		
-		StreamResult result = new StreamResult(writer); 
+		StreamResult result = new StreamResult(outputStream); 
 		transformer.transform(source, result);
 
 		doc = null;
